@@ -46,11 +46,10 @@ function findBy(filter) {
 }
 
 function findById(user_id) {
-  // return db('users as u')
-  //   .join('roles as r', 'u.role_id', '=', 'r.role_id')
-  //   .select('u.user_id', 'u.username', 'r.role_name as role')
-  //   .where('u.user_id', 'u.username', 'r.role_name as role')
-  //   first()
+   return db('users')
+     .join('roles', 'users.role_id', '=', 'roles.role_id')
+     .select('users.user_id', 'users.username', 'roles.role_name')
+     .where('users.user_id', user_id).first()
 
   /**
     You will need to join two tables.
