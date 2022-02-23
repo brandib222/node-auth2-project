@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs')
-//const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 
 const router = require("express").Router();
 const User = require('../users/users-model.js')
@@ -11,16 +11,19 @@ router.post("/register", validateRoleName, (req, res, next) => {
   const { username, password } = req.body
   const { role_name } = req
   const hash = bcrypt.hashSync(password, 8)
+  
 
   User.add({ username, password: hash, role_name })
     .then(newUser => {
       res.status(201).json({
-        user: newUser.user, 
+        user_id: newUser.user_id, 
         username: newUser.username, 
         role_name: newUser.role_name
       })
     })
     .catch(next)
+  });
+
 
   /**
     [POST] /api/auth/register { "username": "anna", "password": "1234", "role_name": "angel" }
@@ -34,10 +37,19 @@ router.post("/register", validateRoleName, (req, res, next) => {
     }
    */
 
-});
 
 
 router.post("/login", checkUsernameExists, (req, res, next) => {
+  if (bcrypt.compareSync(req.body.password, req.user.password)) {
+    const token = buildToken(req.user)
+    res.json({
+      message: `${req.user.username} is back!`, 
+      token,
+    })
+  } else {
+    next({ status:401, message: 'Invalid credentials' })
+  }
+
   /**
     [POST] /api/auth/login { "username": "sue", "password": "1234" }
 
@@ -58,5 +70,18 @@ router.post("/login", checkUsernameExists, (req, res, next) => {
     }
    */
 });
+
+function buildToken(user) {
+  // claims the token is going to include
+  const payload = {
+    subject: user.user_id,
+    role_name: user.role_name,
+    username: user.username,
+  }
+  const options = {
+    expiresIn:'1d',
+  }
+  return jwt.sign(payload, JWT_SECRET, options)
+}
 
 module.exports = router;
